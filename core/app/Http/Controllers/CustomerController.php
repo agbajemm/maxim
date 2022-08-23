@@ -5,29 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class CustomerController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        $customers = Customer::paginate();
-
-        return view('dashboard', compact('customers'));
-    }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     * Create new customer
      */
     public function create(Request $request)
     {
+
         $request->validate([
             'name' => 'required|string',
             'email' => 'required',
@@ -42,82 +31,100 @@ class CustomerController extends Controller
         $customer->budget = $request->budget;
         $customer->message = $request->message;
         $customer->save();
-        return redirect()->back();
+
+        return response()->json([
+            'status'=> "success",
+            'message'=> 'Customer Created',
+            'customer'=> [
+            'name'=> $customer->name,
+            'phone'=> $customer->phone_no,
+            'email'=> $customer->email,
+            ]
+        ],200);
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Display Customers
      */
-    public function store(Request $request)
+    public function display(Request $request)
     {
-        //
+        $customers = Customer::all();
+        return response()->json([
+            'status'=> "success",
+            'data' => $customers
+        ],200);
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\Customer  $customer
-     * @return \Illuminate\Http\Response
+     * Update Customer
      */
-    public function show($id)
+    public function update(Request $request)
     {
-        $customer = Customer::findorfail($id);
-        return view('view', compact('customer'));
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Customer  $customer
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Customer $customer)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Customer  $customer
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Customer $customer)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Customer  $customer
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Customer $customer)
-    {
-        //
-    }
-    public function createProfile($id)
-    {
-        $customer = Customer::findorfail($id);
-            $client = new \GuzzleHttp\Client();
-            $response = $client->post('http://localhost/elegant-wp/wp-json/wp/v2/users', [
-                'auth' => [
-                    'admin', 
-                    'elegant1$'
-                ],
-                'form_params' => [
-                    'username' => "$customer->name",
-                    'email' => "$customer->email",
-                    'password' => "$customer->name,$customer->phone_no",
-                    'url' => "http://localhost/elegant/customer/$customer->id",
-                ]
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required',
+            'phone_no' => 'required|numeric',
+            'budget' => 'required|numeric',
+            'message' => 'required|string',
             ]);
+
+        $id = DB::table('customers')->where('email', $request->email)->first();
+
+        $customer = Customer::find($id->id);
+        $customer->name = $request->name;
+        $customer->phone_no = $request->phone_no;
+        $customer->budget = $request->budget;
+        $customer->message = $request->message;
+        $customer->update();
+
+        return response()->json([
+            'status'=> "success",
+            'message'=> 'Customer Updated',
+            'customer'=> [
+            'name'=> $customer->name,
+            'phone'=> $customer->phone_no,
+            'email'=> $customer->email,
+            ]
+        ],200);
+    }
+
+    /**
+     * Delete Customer
+     */
+    public function delete(Request $request)
+    {
+        DB::table('customers')->where('email', $request->email)->delete();
+        return response()->json([
+            'status'=> "success",
+            'message'=> 'Customer Deleted',
+        ],200);
+        $databaseName = \DB::connection()->getDatabaseName();
+    }
+    public function dbInfo()
+    {
+        $databaseName = \DB::connection()->getDatabaseName();
+        $tables = DB::select('SHOW TABLES');
+        $customers = Schema::getColumnListing('customers');
+        $failed_jobs = Schema::getColumnListing('failed_jobs');
+        $migrations = Schema::getColumnListing('migrations');
+        $password_resets = Schema::getColumnListing('password_resets');
+        $personal_access_tokens = Schema::getColumnListing('personal_access_tokens');
+        $users = Schema::getColumnListing('users');
+
+        return response()->json([
+            'status'=> "success",
+            'data'=> [
+                "database name" => $databaseName,
+                "tables" => $tables,
+                "customers" => $customers,
+                "failed_jobs" => $failed_jobs,
+                "migrations" => $migrations,
+                "password_resets" => $password_resets,
+                "personal_access_tokens" => $personal_access_tokens,
+                "users" => $users,
+            ],
+        ],200);
         
-        return redirect()->back();
     }
 }

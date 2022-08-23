@@ -16,12 +16,4 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-Route::get('/dashboard', [\App\Http\Controllers\CustomerController::class, 'index'])->middleware(['auth'])->name('dashboard');;
-Route::post('customer', [\App\Http\Controllers\CustomerController::class, 'create'])
-        ->name('customer.create');
-Route::get('/customer/{id}', [\App\Http\Controllers\CustomerController::class, 'show'])->middleware(['auth'])
-        ->name('customer.view');
-Route::post('customer/{id}', [\App\Http\Controllers\CustomerController::class, 'createProfile'])
-        ->name('create.profile');
-
 require __DIR__.'/auth.php';
